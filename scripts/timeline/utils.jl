@@ -1,4 +1,5 @@
 using Dates
+using Downloads
 using Pkg
 
 # Relies on this script being in $STS-PATH/scripts/timeline
@@ -62,4 +63,17 @@ exec(cmd::Cmd) = begin
         rethrow(ErrorException("Error executing $cmd: $e\nstdout:\n$(String(take!(out)))\nstderr:\n$(String(take!(err)))\n"))
     end
     strip(String(take!(out)) * String(take!(err)))
+end
+
+# Download the specified version of precompiled Julia to the specified location.
+# Return the path to the given julia binary.
+# If the version already exists there, reuse it.
+get_julia_bin(ver::VersionNumber, dir::AbstractString) = begin
+    bin = joinpath(dir, "julia-$(ver.major).$(ver.minor).$(ver.patch)/bin/julia")
+    if !isfile(bin)
+        url = "https://julialang-s3.julialang.org/bin/linux/x64/$(ver.major).$(ver.minor)/julia-$(ver.major).$(ver.minor).$(ver.patch)-linux-x86_64.tar.gz"
+        cmd = `tar xzf - -C $(mkpath(dir))`
+        Downloads.download(url, cmd)
+    end
+    bin
 end
